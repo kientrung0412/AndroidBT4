@@ -2,11 +2,13 @@ package com.example.androidbt4;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.Random;
 
@@ -16,7 +18,6 @@ public class PlayActivity extends AppCompatActivity implements Runnable, View.On
 
     private ImageButton btnTrue;
     private ImageButton btnFalse;
-    private ImageButton btnRePlay;
     private TextView tvScore;
     private TextView tvTime;
     private TextView tvMatch;
@@ -27,6 +28,7 @@ public class PlayActivity extends AppCompatActivity implements Runnable, View.On
     private int result;
     private boolean isTrue;
     private Thread thread;
+    private boolean stopThread = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,8 +38,13 @@ public class PlayActivity extends AppCompatActivity implements Runnable, View.On
         showAll();
     }
 
+    @Override
+    public void onBackPressed() {
+        stopThread = true;
+        finish();
+    }
+
     private void initViews() {
-        btnRePlay = findViewById(R.id.btn_re_play);
         btnFalse = findViewById(R.id.btn_false);
         btnTrue = findViewById(R.id.btn_true);
         tvTime = findViewById(R.id.tv_time);
@@ -45,13 +52,16 @@ public class PlayActivity extends AppCompatActivity implements Runnable, View.On
         tvMatch = findViewById(R.id.tv_match);
         btnTrue.setOnClickListener(this);
         btnFalse.setOnClickListener(this);
-        thread = new Thread(this);
+        thread = new Thread(PlayActivity.this);
         thread.start();
     }
 
     @Override
     public void run() {
         while (time > 0) {
+            if (stopThread) {
+                return;
+            }
             try {
                 Thread.sleep(1000);
                 time--;
@@ -75,7 +85,8 @@ public class PlayActivity extends AppCompatActivity implements Runnable, View.On
             score++;
             showAll();
         } else {
-            time = 0;
+            stopThread = true;
+            gameOver();
         }
     }
 
@@ -100,7 +111,7 @@ public class PlayActivity extends AppCompatActivity implements Runnable, View.On
     }
 
     private void gameOver() {
-        this.finish();
+        finish();
         Intent intent = new Intent(this, GameOverActivity.class);
         intent.putExtra(EXTRA_SCORE, score);
         this.startActivity(intent);
